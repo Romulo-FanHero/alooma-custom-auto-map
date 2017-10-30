@@ -1,0 +1,26 @@
+{
+  "name": "alooma-custom-auto-map",
+  "version": "1.0.1",
+  "description": "Automation script that extends the Alooma's auto-map feature in order to tailor it to particular data transformation/mapping needs",
+  "main": "index.js",
+  "scripts": {
+    "test": "npm test"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Romulo-FanHero/alooma-custom-auto-map.git"
+  },
+  "keywords": [
+    "alooma",
+    "etl",
+    "automap",
+    "devops",
+    "automation"
+  ],
+  "author": "Romulo Carvalho",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/Romulo-FanHero/alooma-custom-auto-map/issues"
+  },
+  "homepage": "https://github.com/Romulo-FanHero/alooma-custom-auto-map#readme"
+}

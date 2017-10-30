@@ -1,0 +1,902 @@
+<!DOCTYPE html>
+
+<html>
+<head>
+  <title>index.js</title>
+  <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+  <meta name="viewport" content="width=device-width, target-densitydpi=160dpi, initial-scale=1.0; maximum-scale=1.0; user-scalable=0;">
+  <link rel="stylesheet" media="all" href="docco.css" />
+</head>
+<body>
+  <div id="container">
+    <div id="background"></div>
+    
+    <ul class="sections">
+        
+          <li id="title">
+              <div class="annotation">
+                  <h1>index.js</h1>
+              </div>
+          </li>
+        
+        
+        
+        <li id="section-1">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-1">&#182;</a>
+              </div>
+              
+            </div>
+            
+            <div class="content"><div class='highlight'><pre><span class="hljs-comment">/************************************************************************
+ *
+ * HIGHLY CUSTOMIZABLE AUTO-MAPPING EXTENSION FOR ALOOMA ETL PLATFORM
+ *
+ * @Author: oakromulo (Romulo-FanHero)
+ * @Date:   2017-10-27T19:47:19-02:00
+ * @Email:  romulo@fanhero.com
+ * @Last modified by:   oakromulo
+ * @Last modified time: 2017-10-30T14:52:25-02:00
+ * @License: MIT
+ *
+ ************************************************************************/</span></pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-2">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-2">&#182;</a>
+              </div>
+              <p>dependencies</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre><span class="hljs-keyword">const</span> _ = <span class="hljs-built_in">require</span>(<span class="hljs-string">'lodash'</span>);
+<span class="hljs-keyword">const</span> promise = <span class="hljs-built_in">require</span>(<span class="hljs-string">'bluebird'</span>);
+<span class="hljs-keyword">const</span> decamelize = <span class="hljs-built_in">require</span>(<span class="hljs-string">'decamelize'</span>);
+<span class="hljs-keyword">const</span> request = <span class="hljs-built_in">require</span>(<span class="hljs-string">'request-promise'</span>).defaults({ <span class="hljs-attr">jar</span>: <span class="hljs-literal">true</span>, <span class="hljs-attr">json</span>: <span class="hljs-literal">true</span> }); <span class="hljs-comment">// &lt;-- VERY HANDY!</span></pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-3">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-3">&#182;</a>
+              </div>
+              <p>alooma access credentials</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre><span class="hljs-keyword">const</span> EMAIL = process.env.ALOOMA_EMAIL;
+<span class="hljs-keyword">const</span> PASSWORD = process.env.ALOOMA_PASSWORD;
+<span class="hljs-keyword">const</span> BASE_URL = <span class="hljs-string">'https://app.alooma.com:443/rest'</span>;</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-4">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-4">&#182;</a>
+              </div>
+              <p>table destination on the target (output) warehouse</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre><span class="hljs-keyword">const</span> TARGET_SCHEMA = <span class="hljs-string">'dataflux'</span>;</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-5">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-5">&#182;</a>
+              </div>
+              <p>default mapping mode for new mappings</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre><span class="hljs-keyword">const</span> DEFAULT_MAPPING_MODE = <span class="hljs-string">'STRICT'</span>;</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-6">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-6">&#182;</a>
+              </div>
+              <p>default settings to be applied to all fields identified by auto-map as VARCHAR</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre><span class="hljs-keyword">const</span> DEFAULT_VARCHAR_LENGTH = <span class="hljs-number">4096</span>;
+<span class="hljs-keyword">const</span> DEFAULT_VARCHAR_TRUNCATION = <span class="hljs-literal">true</span>;</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-7">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-7">&#182;</a>
+              </div>
+              <p>choose between TIMESTAMP and TIMESTAMPTZ as default type for timestamp columns</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre><span class="hljs-keyword">const</span> DEFAULT_TIMESTAMP_TYPE = <span class="hljs-string">'TIMESTAMPTZ'</span>;</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-8">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-8">&#182;</a>
+              </div>
+              <p>define settings for the primary key (informative-only on Redshift)</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre><span class="hljs-keyword">const</span> DEFAULT_PRIMARY_KEY = <span class="hljs-string">'message_id'</span>;
+<span class="hljs-keyword">const</span> DEFAULT_PRIMARY_KEY_TYPE = <span class="hljs-string">'CHAR'</span>;
+<span class="hljs-keyword">const</span> DEFAULT_PRIMARY_KEY_LENGTH = <span class="hljs-number">36</span>;
+<span class="hljs-keyword">const</span> DEFAULT_PRIMARY_KEY_TRUNCATION = <span class="hljs-literal">false</span>;</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-9">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-9">&#182;</a>
+              </div>
+              <p>define a column for an evenly distribution of fact table data across nodes</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre><span class="hljs-keyword">const</span> DEFAULT_DISTRIBUTION_KEY = <span class="hljs-string">'timestamp'</span>;</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-10">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-10">&#182;</a>
+              </div>
+              <p>default datatype settings for fields identified as <code>id</code> columns</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre><span class="hljs-keyword">const</span> DEFAULT_ID_TYPE = <span class="hljs-string">'VARCHAR'</span>;
+<span class="hljs-keyword">const</span> DEFAULT_ID_LENGTH = <span class="hljs-number">256</span>;
+<span class="hljs-keyword">const</span> DEFAULT_ID_TRUNCATION = <span class="hljs-literal">false</span>;
+<span class="hljs-keyword">const</span> ID_PATTERNS = [<span class="hljs-string">'id'</span>];</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-11">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-11">&#182;</a>
+              </div>
+              <p>specify custom length for sortkeys with datatype varchar</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre><span class="hljs-keyword">const</span> DEFAULT_SORT_KEY_VARCHAR_LENGTH = <span class="hljs-number">256</span>;</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-12">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-12">&#182;</a>
+              </div>
+              <p>determine patterns that indicate that a column is a good candidate for a compound/interleaved sortkey</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre><span class="hljs-keyword">const</span> SORT_KEY_PATTERNS = [<span class="hljs-string">'timestamp'</span>, <span class="hljs-string">'id'</span>, <span class="hljs-string">'user'</span>, <span class="hljs-string">'email'</span>, <span class="hljs-string">'gender'</span>, <span class="hljs-string">'os_name'</span>, <span class="hljs-string">'birthday'</span>, <span class="hljs-string">'created_at'</span>];</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-13">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-13">&#182;</a>
+              </div>
+              <p>high-dispersion numeric fields that fit within the pattern below are cast into varchar</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre><span class="hljs-keyword">const</span> FORCE_VARCHAR_PATTERNS = [<span class="hljs-string">'_id'</span>, <span class="hljs-string">'version'</span>, <span class="hljs-string">'timezone'</span>, <span class="hljs-string">'build'</span>];</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-14">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-14">&#182;</a>
+              </div>
+              <p>large numeric fields in this pattern are cast into BIGINT</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre><span class="hljs-keyword">const</span> FORCE_BIGINT_PATTERNS = [<span class="hljs-string">'geolocation_timestamp'</span>];</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-15">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-15">&#182;</a>
+              </div>
+              <p>patterns to identify fields that should be set as FLOATING POINT by default (e.g. IMU/GPS data)</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre><span class="hljs-keyword">const</span> FORCE_FLOAT_PATTERNS = [<span class="hljs-string">'geolocation'</span>];</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-16">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-16">&#182;</a>
+              </div>
+              <p>columns in this pattern are discarded (not mapped)</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre><span class="hljs-keyword">const</span> DISCARD_COLUMN_PATTERNS = [<span class="hljs-string">'password'</span>, <span class="hljs-string">'floor_level'</span>, <span class="hljs-string">'integrations'</span>, <span class="hljs-string">'__c'</span>];</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-17">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-17">&#182;</a>
+              </div>
+              <p>minimum number of times that a field must appear globally without being discarded due to rarity</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre><span class="hljs-keyword">const</span> MIN_OCCURRENCE = <span class="hljs-number">5</span>; <span class="hljs-comment">// 5 samples overall</span></pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-18">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-18">&#182;</a>
+              </div>
+              <p>minimum relative occurence of a field relative to the sample size</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre><span class="hljs-keyword">const</span> MIN_OCCURRENCE_PERCENT = <span class="hljs-number">1.0</span>; <span class="hljs-comment">// 1 in 1000</span></pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-19">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-19">&#182;</a>
+              </div>
+              <p>minimum number of distinct sample values for each field, bypassed if value chosen is less than 2</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre><span class="hljs-keyword">const</span> MIN_DISTINCT_SAMPLES = <span class="hljs-number">2</span>; <span class="hljs-comment">// 2 distinct samples overall</span></pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-20">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-20">&#182;</a>
+              </div>
+              <p>maximum % of a particular sample value relative to the total samples of that particular field</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre><span class="hljs-keyword">const</span> MAX_SAMPLE_OCCURRENCE_PERCENT = <span class="hljs-number">98.9</span>; <span class="hljs-comment">// 989 in 1000</span></pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-21">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-21">&#182;</a>
+              </div>
+              <p>patterns on table names to be bypassed and not processed at all by this script</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre><span class="hljs-keyword">const</span> EVENT_EXCLUSION_PATTERN = [<span class="hljs-string">'develop'</span>];</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-22">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-22">&#182;</a>
+              </div>
+              <p>naïve helper method to check if <code>str</code> include any of the specified <code>patterns</code></p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre><span class="hljs-keyword">const</span> inPattern = <span class="hljs-function">(<span class="hljs-params">str, patterns</span>) =&gt;</span> {
+    <span class="hljs-keyword">var</span> found = <span class="hljs-literal">false</span>;
+    patterns.forEach(<span class="hljs-function"><span class="hljs-params">p</span> =&gt;</span> {
+        <span class="hljs-keyword">if</span> (!found &amp;&amp; str.toLowerCase().includes(p)) found = <span class="hljs-literal">true</span>;
+    });
+    <span class="hljs-keyword">return</span> found;
+};</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-23">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-23">&#182;</a>
+              </div>
+              <p>helper function to fix column names by decamelizing and replacing spaces with underscores</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre><span class="hljs-keyword">const</span> fixNaming = <span class="hljs-function"><span class="hljs-params">n</span> =&gt;</span> decamelize(n).replace(<span class="hljs-regexp">/ /g</span>, <span class="hljs-string">'_'</span>);</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-24">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-24">&#182;</a>
+              </div>
+              <p>login (auth cookie is picked up here automatically and propagates to all subsequent calls)</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>request.post(<span class="hljs-string">`<span class="hljs-subst">${BASE_URL}</span>/login`</span>, { <span class="hljs-attr">json</span>: { <span class="hljs-attr">email</span>: EMAIL, <span class="hljs-attr">password</span>: PASSWORD } })</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-25">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-25">&#182;</a>
+              </div>
+              <p>get all event-types</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>    .then(<span class="hljs-function"><span class="hljs-params">()</span> =&gt;</span> request.get(<span class="hljs-string">`<span class="hljs-subst">${BASE_URL}</span>/event-types`</span>))</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-26">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-26">&#182;</a>
+              </div>
+              <p>process all unmapped event-types</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>    .then(<span class="hljs-function"><span class="hljs-params">evts</span> =&gt;</span> promise.map(</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-27">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-27">&#182;</a>
+              </div>
+              <p>filter unmapped types</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>        evts.filter(<span class="hljs-function"><span class="hljs-params">e</span> =&gt;</span> e.state === <span class="hljs-string">'UNMAPPED'</span> &amp;&amp; !inPattern(e.name, EVENT_EXCLUSION_PATTERN)),</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-28">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-28">&#182;</a>
+              </div>
+              <p>load full data on each type</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>        evt =&gt; request.get(<span class="hljs-string">`<span class="hljs-subst">${BASE_URL}</span>/event-types/<span class="hljs-subst">${evt.name}</span>`</span>)</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-29">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-29">&#182;</a>
+              </div>
+              <p>run alooma’s vanilla auto-mapper</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>            .then(<span class="hljs-function"><span class="hljs-params">evt</span> =&gt;</span> request.post(<span class="hljs-string">`<span class="hljs-subst">${BASE_URL}</span>/event-types/<span class="hljs-subst">${evt.name}</span>/auto-map`</span>, { <span class="hljs-attr">json</span>: evt }))</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-30">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-30">&#182;</a>
+              </div>
+              <p>process fields, create table and commit new mapping on each automapped event type</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>            .then(<span class="hljs-function"><span class="hljs-params">evt</span> =&gt;</span> {
+
+                <span class="hljs-built_in">console</span>.log(evt.name, <span class="hljs-string">'started'</span>);</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-31">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-31">&#182;</a>
+              </div>
+              <p>flat list to store the mapping for each field on the evt obj</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>                <span class="hljs-keyword">var</span> mappings = [];</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-32">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-32">&#182;</a>
+              </div>
+              <p>initial sort key index</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>                <span class="hljs-keyword">var</span> sortKeyIndex = <span class="hljs-number">0</span>;</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-33">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-33">&#182;</a>
+              </div>
+              <p>recursive function to iterate all fields and sub-fieldsm, applying a custom auto-map</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>                <span class="hljs-keyword">var</span> autoMap = <span class="hljs-function"><span class="hljs-params">e</span> =&gt;</span> e.fields.forEach(<span class="hljs-function"><span class="hljs-params">f</span> =&gt;</span> {</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-34">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-34">&#182;</a>
+              </div>
+              <p>fill parent fields</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>                    <span class="hljs-keyword">if</span> (!e.father) e.father = <span class="hljs-string">''</span>;
+                    <span class="hljs-keyword">if</span> (!e.fieldName) e.fieldName = <span class="hljs-string">''</span>;
+
+                    f.father = e.father + fixNaming(e.fieldName);
+                    <span class="hljs-keyword">if</span> (f.father) f.father += <span class="hljs-string">'_'</span>;</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-35">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-35">&#182;</a>
+              </div>
+              <p>continue iterating if not a root event</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>                    <span class="hljs-keyword">if</span> (f.fields.length &gt; <span class="hljs-number">0</span>) <span class="hljs-keyword">return</span> autoMap(f);</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-36">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-36">&#182;</a>
+              </div>
+              <p>verify field stats to account for field acceptance criteria</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>                    <span class="hljs-keyword">var</span> s1 = <span class="hljs-number">0</span>, s2 = <span class="hljs-number">0</span>, s3 = <span class="hljs-number">0</span>;
+                    <span class="hljs-keyword">for</span> (<span class="hljs-keyword">var</span> k <span class="hljs-keyword">in</span> f.stats) {
+                        <span class="hljs-keyword">if</span> (!f.stats[k] || !f.stats[k].count) <span class="hljs-keyword">continue</span>;
+                        s1 += f.stats[k].count;
+                        <span class="hljs-keyword">if</span> (!f.stats[k].samples) <span class="hljs-keyword">continue</span>;
+                        <span class="hljs-keyword">for</span> (<span class="hljs-keyword">var</span> l <span class="hljs-keyword">in</span> f.stats[k].samples) {
+                            <span class="hljs-keyword">if</span> (!f.stats[k].samples[l] || !f.stats[k].samples[l].count) <span class="hljs-keyword">continue</span>;
+                            s2++;
+                            s3 = f.stats[k].samples[l].count &gt; s3 ? f.stats[k].samples[l].count : s3;
+                        }
+                    }</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-37">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-37">&#182;</a>
+              </div>
+              <p>process non-meta fields</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>                    <span class="hljs-keyword">var</span> meta = f.mapping.columnName.includes(<span class="hljs-string">'_metadata'</span>);
+                    <span class="hljs-keyword">if</span> (!meta) {</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-38">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-38">&#182;</a>
+              </div>
+              <p>specifiy column name</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>                        f.mapping.columnName = f.father + fixNaming(f.fieldName);
+                        <span class="hljs-keyword">delete</span> f.father;</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-39">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-39">&#182;</a>
+              </div>
+              <p>verify discard conditions and set flag accordingly</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>                        f.mapping.isDiscarded = (
+                            (s1 &amp;&amp; ((s1 &lt; MIN_OCCURRENCE) || ((s1 * <span class="hljs-number">100.0</span> / evt.stats.count) &lt; MIN_OCCURRENCE_PERCENT))) ||
+                            (s1 &amp;&amp; s3 &amp;&amp; (s3 * <span class="hljs-number">100.0</span> / s1 &gt; MAX_SAMPLE_OCCURRENCE_PERCENT)) ||
+                            (s2 &amp;&amp; (s2 &lt; MIN_DISTINCT_SAMPLES)) ||
+                            inPattern(f.mapping.columnName, DISCARD_COLUMN_PATTERNS)
+                        )  &amp;&amp; f.mapping.columnName !== DEFAULT_PRIMARY_KEY &amp;&amp; f.mapping.columnName !== DEFAULT_DISTRIBUTION_KEY;</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-40">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-40">&#182;</a>
+              </div>
+              <p>check if column type matches a data type change pattern</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>                        <span class="hljs-keyword">if</span> (inPattern(f.mapping.columnName, FORCE_FLOAT_PATTERNS)) {
+                            f.mapping.columnType.type = <span class="hljs-string">'FLOAT_NORM'</span>;
+                        }
+                        <span class="hljs-keyword">if</span> (inPattern(f.mapping.columnName, FORCE_BIGINT_PATTERNS)) {
+                            f.mapping.columnType.type = <span class="hljs-string">'BIGINT'</span>;
+                        }
+                        <span class="hljs-keyword">if</span> (inPattern(f.mapping.columnName, FORCE_VARCHAR_PATTERNS)) {
+                            f.mapping.columnType.type = <span class="hljs-string">'VARCHAR'</span>;
+                        }</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-41">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-41">&#182;</a>
+              </div>
+              <p>enforce default varchar behavior</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>                        <span class="hljs-keyword">if</span> (f.mapping.columnType.type === <span class="hljs-string">'VARCHAR'</span>) {
+                            f.mapping.columnType.length = DEFAULT_VARCHAR_LENGTH;
+                            f.mapping.columnType.truncate = DEFAULT_VARCHAR_TRUNCATION;
+                        }</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-42">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-42">&#182;</a>
+              </div>
+              <p>enforce defawult timestamp behavior</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>                        <span class="hljs-keyword">if</span> (f.mapping.columnType.type.toLowerCase().includes(<span class="hljs-string">'timestamp'</span>)) {
+                            f.mapping.columnType.type = DEFAULT_TIMESTAMP_TYPE;
+                        }</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-43">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-43">&#182;</a>
+              </div>
+              <p>enforce default settings for ID fields</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>                        <span class="hljs-keyword">if</span> (inPattern(f.mapping.columnName, ID_PATTERNS)) {
+                            f.mapping.columnType.type = DEFAULT_ID_TYPE;
+                            f.mapping.columnType.length = DEFAULT_ID_LENGTH;
+                            f.mapping.columnType.truncate = DEFAULT_ID_TRUNCATION;
+                        }</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-44">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-44">&#182;</a>
+              </div>
+              <p>set sort key if column within pattern</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>                        <span class="hljs-keyword">if</span> (inPattern(f.mapping.columnName, SORT_KEY_PATTERNS)) {
+                            f.mapping.sortKeyIndex = sortKeyIndex++;
+                            <span class="hljs-keyword">if</span> (f.mapping.columnType.type === <span class="hljs-string">'VARCHAR'</span>) {
+                                f.mapping.columnType.length = DEFAULT_SORT_KEY_VARCHAR_LENGTH;
+                            }
+                        }
+                        <span class="hljs-keyword">else</span> f.mapping.sortKeyIndex = <span class="hljs-number">-1</span>;</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-45">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-45">&#182;</a>
+              </div>
+              <p>set distribution key if dist column</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>                        <span class="hljs-keyword">if</span> (f.mapping.columnName === DEFAULT_DISTRIBUTION_KEY) {
+                            f.mapping.distKey = <span class="hljs-literal">true</span>;
+                        }
+                        <span class="hljs-keyword">else</span> f.mapping.distKey = <span class="hljs-literal">false</span>;</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-46">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-46">&#182;</a>
+              </div>
+              <p>set primary key if pk column</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>                        <span class="hljs-keyword">if</span> (f.mapping.columnName === DEFAULT_PRIMARY_KEY) {
+                            f.mapping.columnType.type = DEFAULT_PRIMARY_KEY_TYPE;
+                            f.mapping.columnType.length = DEFAULT_PRIMARY_KEY_LENGTH;
+                            f.mapping.columnType.truncate = DEFAULT_PRIMARY_KEY_TRUNCATION;
+                            f.mapping.columnType.nonNull = <span class="hljs-literal">true</span>;
+                            f.mapping.primaryKey = <span class="hljs-literal">true</span>;
+                        }
+                        <span class="hljs-keyword">else</span> f.mapping.primaryKey = <span class="hljs-literal">false</span>;</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-47">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-47">&#182;</a>
+              </div>
+              <p>enforce no length/truncate fields on non-CHAR types</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>                        <span class="hljs-keyword">if</span> (!f.mapping.columnType.type.toLowerCase().includes(<span class="hljs-string">'char'</span>)) {
+                            <span class="hljs-keyword">delete</span> f.mapping.columnType.length;
+                            <span class="hljs-keyword">delete</span> f.mapping.columnType.truncate;
+                        }
+                    }</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-48">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-48">&#182;</a>
+              </div>
+              <p>clear columnName and columnType for discarded fields</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>                    <span class="hljs-keyword">if</span> (f.mapping.isDiscarded) {
+                        f.mapping.columnName = <span class="hljs-string">''</span>;
+                        f.mapping.columnType = <span class="hljs-literal">null</span>;
+                    }
+                    <span class="hljs-keyword">else</span> mappings.push(_.omit(_.cloneDeep(f.mapping), [<span class="hljs-string">'isDiscarded'</span>, <span class="hljs-string">'machineGenerated'</span>, <span class="hljs-string">'subFields'</span>]));
+                });
+                autoMap(evt);</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-49">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-49">&#182;</a>
+              </div>
+              <p>exect recursive cleanup routine to discard extra fields not required for mapping</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>                <span class="hljs-keyword">var</span> cleanUp = <span class="hljs-function"><span class="hljs-params">e</span> =&gt;</span> e.fields.forEach(<span class="hljs-function"><span class="hljs-params">f</span> =&gt;</span> {
+                    <span class="hljs-keyword">try</span> { <span class="hljs-keyword">delete</span> f.father; } <span class="hljs-keyword">catch</span> (ex) {}
+                    <span class="hljs-keyword">try</span> { <span class="hljs-keyword">delete</span> f.fields.father; } <span class="hljs-keyword">catch</span> (ex) {}
+                    <span class="hljs-keyword">try</span> { <span class="hljs-keyword">delete</span> f.stats; } <span class="hljs-keyword">catch</span> (ex) {}
+                    <span class="hljs-keyword">try</span> { <span class="hljs-keyword">delete</span> f.fields.stats; } <span class="hljs-keyword">catch</span> (ex) {}
+                    <span class="hljs-keyword">try</span> { <span class="hljs-keyword">delete</span> f.mapping.sortKeyIndex; } <span class="hljs-keyword">catch</span> (ex) {}
+                    <span class="hljs-keyword">try</span> { <span class="hljs-keyword">delete</span> f.mapping.distKey; } <span class="hljs-keyword">catch</span> (ex) {}
+                    <span class="hljs-keyword">try</span> { <span class="hljs-keyword">delete</span> f.mapping.primaryKey; } <span class="hljs-keyword">catch</span> (ex) {}
+                    <span class="hljs-keyword">try</span> { <span class="hljs-keyword">delete</span> e.father; } <span class="hljs-keyword">catch</span> (ex) {}
+                    <span class="hljs-keyword">try</span> { <span class="hljs-keyword">delete</span> e.fields.father; } <span class="hljs-keyword">catch</span> (ex) {}
+                    <span class="hljs-keyword">try</span> { <span class="hljs-keyword">delete</span> e.stats; } <span class="hljs-keyword">catch</span> (ex) {}
+                    <span class="hljs-keyword">try</span> { <span class="hljs-keyword">delete</span> e.fields.stats; } <span class="hljs-keyword">catch</span> (ex) {}
+                    <span class="hljs-keyword">try</span> { <span class="hljs-keyword">delete</span> e.mapping.sortKeyIndex; } <span class="hljs-keyword">catch</span> (ex) {}
+                    <span class="hljs-keyword">try</span> { <span class="hljs-keyword">delete</span> e.mapping.distKey; } <span class="hljs-keyword">catch</span> (ex) {}
+                    <span class="hljs-keyword">try</span> { <span class="hljs-keyword">delete</span> e.mapping.primaryKey; } <span class="hljs-keyword">catch</span> (ex) {}
+                    <span class="hljs-keyword">if</span> (f.fields.length &gt; <span class="hljs-number">0</span>) <span class="hljs-keyword">return</span> cleanUp(f);
+                });
+                cleanUp(evt);</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-50">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-50">&#182;</a>
+              </div>
+              <p>create table on the target schema then apply custom mapping</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>                <span class="hljs-keyword">return</span> request.post(<span class="hljs-string">`<span class="hljs-subst">${BASE_URL}</span>/tables/<span class="hljs-subst">${TARGET_SCHEMA}</span>/<span class="hljs-subst">${evt.name}</span>`</span>, { <span class="hljs-attr">json</span>: mappings })
+                    .then(<span class="hljs-function"><span class="hljs-params">()</span> =&gt;</span> request.post(<span class="hljs-string">`<span class="hljs-subst">${BASE_URL}</span>/event-types/<span class="hljs-subst">${finalEvt.name}</span>/mapping`</span>, { <span class="hljs-attr">json</span>: {
+                        <span class="hljs-attr">name</span>: evt.name,
+                        <span class="hljs-attr">mapping</span>: {
+                            <span class="hljs-attr">tableName</span>: evt.name,
+                            <span class="hljs-attr">schema</span>: TARGET_SCHEMA,
+                        },
+                        <span class="hljs-attr">fields</span>: evt.fields,
+                        <span class="hljs-attr">mappingMode</span>: DEFAULT_MAPPING_MODE
+                    }}))
+                    .then(<span class="hljs-function"><span class="hljs-params">()</span> =&gt;</span> <span class="hljs-built_in">console</span>.log(evt.name, <span class="hljs-string">'finished'</span>))
+                    .catch(<span class="hljs-built_in">console</span>.error);
+            })
+            .catch(<span class="hljs-built_in">console</span>.error)
+    ))
+    .catch(<span class="hljs-built_in">console</span>.error);</pre></div></div>
+            
+        </li>
+        
+    </ul>
+  </div>
+</body>
+</html>
