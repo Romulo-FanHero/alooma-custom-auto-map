@@ -6,7 +6,7 @@
  * @Date:   2017-10-27T19:47:19-02:00
  * @Email:  romulo@fanhero.com
  * @Last modified by:   oakromulo
- * @Last modified time: 2017-10-31T11:10:15-02:00
+ * @Last modified time: 2017-10-31T15:57:43-02:00
  * @License: MIT
  *
  ************************************************************************/
@@ -164,7 +164,7 @@ request.post(`${BASE_URL}/login`, { json: { email: EMAIL, password: PASSWORD } }
                             (s1 && s3 && (s3 * 100.0 / s1 > MAX_SAMPLE_OCCURRENCE_PERCENT)) ||
                             (s2 && (s2 < MIN_DISTINCT_SAMPLES)) ||
                             inPattern(f.mapping.columnName, DISCARD_COLUMN_PATTERNS)
-                        )  && f.mapping.columnName !== DEFAULT_PRIMARY_KEY && f.mapping.columnName !== DEFAULT_DISTRIBUTION_KEY;
+                        )  && f.mapping.columnName !== DEFAULT_PRIMARY_KEY && f.mapping.columnName !== DEFAULT_DISTRIBUTION_KEY && !inPattern(f.mapping.columnName, ID_PATTERNS);
 
                         // check if column type matches a data type change pattern
                         if (inPattern(f.mapping.columnName, FORCE_FLOAT_PATTERNS)) {
