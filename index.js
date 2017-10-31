@@ -6,7 +6,7 @@
  * @Date:   2017-10-27T19:47:19-02:00
  * @Email:  romulo@fanhero.com
  * @Last modified by:   oakromulo
- * @Last modified time: 2017-10-31T10:52:23-02:00
+ * @Last modified time: 2017-10-31T11:10:15-02:00
  * @License: MIT
  *
  ************************************************************************/
@@ -258,7 +258,7 @@ request.post(`${BASE_URL}/login`, { json: { email: EMAIL, password: PASSWORD } }
 
                 // create table on the target schema then apply custom mapping
                 return request.post(`${BASE_URL}/tables/${TARGET_SCHEMA}/${evt.name}`, { json: mappings })
-                    .then(() => request.post(`${BASE_URL}/event-types/${finalEvt.name}/mapping`, { json: {
+                    .then(() => request.post(`${BASE_URL}/event-types/${evt.name}/mapping`, { json: {
                         name: evt.name,
                         mapping: {
                             tableName: evt.name,
