@@ -6,7 +6,7 @@
  * @Date:   2017-10-27T19:47:19-02:00
  * @Email:  romulo@fanhero.com
  * @Last modified by:   oakromulo
- * @Last modified time: 2017-10-30T14:52:25-02:00
+ * @Last modified time: 2017-10-31T10:52:23-02:00
  * @License: MIT
  *
  ************************************************************************/
@@ -81,7 +81,7 @@ const MIN_DISTINCT_SAMPLES = 2; // 2 distinct samples overall
 const MAX_SAMPLE_OCCURRENCE_PERCENT = 98.9; // 989 in 1000
 
 // patterns on table names to be bypassed and not processed at all by this script
-const EVENT_EXCLUSION_PATTERN = ['develop'];
+const EVENT_EXCLUSION_PATTERN = ['develop', 'other'];
 
 // naïve helper method to check if `str` include any of the specified `patterns`
 const inPattern = (str, patterns) => {
@@ -273,4 +273,3 @@ request.post(`${BASE_URL}/login`, { json: { email: EMAIL, password: PASSWORD } }
             .catch(console.error)
     ))
     .catch(console.error);
-
