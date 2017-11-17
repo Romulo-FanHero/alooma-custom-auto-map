@@ -22,9 +22,6 @@ const EMAIL = process.env.ALOOMA_EMAIL;
 const PASSWORD = process.env.ALOOMA_PASSWORD;
 const BASE_URL = 'https://app.alooma.com:443/rest';
 
-// table destination on the target (output) warehouse
-const TARGET_SCHEMA = 'dataflux';
-
 // default mapping mode for new mappings
 const DEFAULT_MAPPING_MODE = 'STRICT';
 
@@ -57,28 +54,16 @@ const DEFAULT_SORT_KEY_VARCHAR_LENGTH = 256;
 const SORT_KEY_PATTERNS = ['timestamp', 'id', 'user', 'email', 'gender', 'os_name', 'birthday', 'created_at'];
 
 // high-dispersion numeric fields that fit within the pattern below are cast into varchar
-const FORCE_VARCHAR_PATTERNS = ['_id', 'version', 'timezone', 'build'];
+const FORCE_VARCHAR_PATTERNS = ['_id', 'version', 'timezone', 'build', 'floor_level', 'google_analytics'];
 
 // large numeric fields in this pattern are cast into BIGINT
-const FORCE_BIGINT_PATTERNS = ['geolocation_timestamp'];
+const FORCE_BIGINT_PATTERNS = ['geolocation_timestamp', 'properties_transaction'];
 
 // patterns to identify fields that should be set as FLOATING POINT by default (e.g. IMU/GPS data)
 const FORCE_FLOAT_PATTERNS = ['geolocation'];
 
 // columns in this pattern are discarded (not mapped)
-const DISCARD_COLUMN_PATTERNS = ['received_at', 'password', 'floor_level', 'integrations', '__c'];
-
-// minimum number of times that a field must appear globally without being discarded due to rarity
-const MIN_OCCURRENCE = 5; // 5 samples overall
-
-// minimum relative occurence of a field relative to the sample size
-const MIN_OCCURRENCE_PERCENT = 1.0; // 1 in 1000
-
-// minimum number of distinct sample values for each field, bypassed if value chosen is less than 2
-const MIN_DISTINCT_SAMPLES = 2; // 2 distinct samples overall
-
-// maximum % of a particular sample value relative to the total samples of that particular field
-const MAX_SAMPLE_OCCURRENCE_PERCENT = 98.9; // 989 in 1000
+const DISCARD_COLUMN_PATTERNS = ['floor_level', 'integrations_', 'context_traits_modified_at'];
 
 // patterns on table names to be bypassed and not processed at all by this script
 const EVENT_EXCLUSION_PATTERN = ['develop', 'other'];
@@ -105,7 +90,7 @@ request.post(`${BASE_URL}/login`, { json: { email: EMAIL, password: PASSWORD } }
     .then(evts => promise.map(
 
         // filter unmapped types
-        evts.filter(e => e.state !== 'UNMAPPED' && e.state !== 'MAPPED' && !inPattern(e.name, EVENT_EXCLUSION_PATTERN)),
+        evts.filter(e => e.state !== 'UNMAPPED' && e.state !== 'MAPPED' && !inPattern(e.name, EVENT_EXCLUSION_PATTERN) && e.name.includes('dataflux')),
 
         evt => {
 
@@ -145,43 +130,13 @@ request.post(`${BASE_URL}/login`, { json: { email: EMAIL, password: PASSWORD } }
                         // continue iterating if not a root event
                         if (f.fields.length > 0) return autoMap(f);
 
-                        if (!umap.includes(f.father + fixNaming(f.fieldName))) return;
-
-                        // verify field stats to account for field acceptance criteria
-                        var s1 = 0, s2 = 0, s3 = 0;
-                        for (var k in f.stats) {
-                            if (!f.stats[k] || !f.stats[k].count) continue;
-                            s1 += f.stats[k].count;
-                            if (!f.stats[k].samples) continue;
-                            for (var l in f.stats[k].samples) {
-                                if (!f.stats[k].samples[l] || !f.stats[k].samples[l].count) continue;
-                                s2++;
-                                s3 = f.stats[k].samples[l].count > s3 ? f.stats[k].samples[l].count : s3;
-                            }
-                        }
-
                         // process non-meta fields
-                        var meta = f.mapping.columnName.includes('_metadata');
+                        var meta = f.mapping.columnName.includes('meta') || f.father.includes('meta') || f.fieldName.includes('meta');
                         if (!meta) {
 
-                            // specify column name
+                            // specifiy column name
                             f.mapping.columnName = f.father + fixNaming(f.fieldName);
                             delete f.father;
-
-                            // verify discard conditions and set flag accordingly
-                            f.mapping.isDiscarded = (
-                                (s1 && ((s1 < MIN_OCCURRENCE))) ||
-                                (s1 && s3 && (s3 * 100.0 / s1 > MAX_SAMPLE_OCCURRENCE_PERCENT)) ||
-                                (s2 && (s2 < MIN_DISTINCT_SAMPLES)) ||
-                                inPattern(f.fieldName, ['received_at']) ||
-                                inPattern(f.mapping.columnName, DISCARD_COLUMN_PATTERNS)
-                            ) && !inPattern(f.mapping.columnName, [DEFAULT_PRIMARY_KEY, DEFAULT_DISTRIBUTION_KEY].concat(SORT_KEY_PATTERNS).concat(ID_PATTERNS));
-
-                            //if (!f.mapping.columnName) console.log(f.mapping.path);
-
-                            if (!f.mapping.columnType || !f.mapping.columnType.type) {
-                                f.mapping.columnType = { type: 'VARCHAR' };
-                            }
 
                             // check if column type matches a data type change pattern
                             if (inPattern(f.mapping.columnName, FORCE_FLOAT_PATTERNS)) {
@@ -200,7 +155,7 @@ request.post(`${BASE_URL}/login`, { json: { email: EMAIL, password: PASSWORD } }
                                 f.mapping.columnType.truncate = DEFAULT_VARCHAR_TRUNCATION;
                             }
 
-                            // enforce defawult timestamp behavior
+                            // enforce default timestamp behavior
                             if (f.mapping.columnType.type.toLowerCase().includes('timestamp')) {
                                 f.mapping.columnType.type = DEFAULT_TIMESTAMP_TYPE;
                             }
@@ -242,13 +197,15 @@ request.post(`${BASE_URL}/login`, { json: { email: EMAIL, password: PASSWORD } }
                                 delete f.mapping.columnType.length;
                                 delete f.mapping.columnType.truncate;
                             }
+
+                            // verify discard conditions and set flag accordingly
+                            if (inPattern(f.mapping.columnName, DISCARD_COLUMN_PATTERNS)) {
+                                f.mapping.isDiscarded = true;
+                                f.mapping.columnName = '';
+                                f.mapping.columnType = null;
+                            }
                         }
 
-                        // clear columnName and columnType for discarded fields
-                        if (f.mapping.isDiscarded) {
-                            f.mapping.columnName = '';
-                            f.mapping.columnType = null;
-                        }
                     });
                     autoMap(evt);
 
@@ -272,11 +229,15 @@ request.post(`${BASE_URL}/login`, { json: { email: EMAIL, password: PASSWORD } }
                     });
                     cleanUp(evt);
 
+                    const schema = evt.name.split('.')[0];
+                    const tableName = evt.name.split('.')[1];
+
+                    // apply custom mapping
                     return request.post(`${BASE_URL}/event-types/${evt.name}/mapping`, { json: {
                             name: evt.name,
                             mapping: {
-                                tableName: evt.name,
-                                schema: TARGET_SCHEMA,
+                                tableName: tableName,
+                                schema: schema
                             },
                             fields: evt.fields,
                             mappingMode: DEFAULT_MAPPING_MODE
