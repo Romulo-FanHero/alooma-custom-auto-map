@@ -138,6 +138,8 @@ request.post(`${BASE_URL}/login`, { json: { email: EMAIL, password: PASSWORD } }
                             f.mapping.columnName = f.father + fixNaming(f.fieldName);
                             delete f.father;
 
+                            if (!f.mapping.columnType) f.mapping.columnType = {};
+
                             // check if column type matches a data type change pattern
                             if (inPattern(f.mapping.columnName, FORCE_FLOAT_PATTERNS)) {
                                 f.mapping.columnType.type = 'FLOAT_NORM';
