@@ -151,7 +151,7 @@ request.post(`${BASE_URL}/login`, { json: { email: EMAIL, password: PASSWORD } }
                     }
 
                     // process non-meta fields
-                    var meta = f.mapping.columnName.includes('_metadata');
+                    var meta = f.mapping.columnName.includes('meta') || f.father.includes('meta') || f.fieldName.includes('meta');
                     if (!meta) {
 
                         // specifiy column name
@@ -224,6 +224,12 @@ request.post(`${BASE_URL}/login`, { json: { email: EMAIL, password: PASSWORD } }
                         if (!f.mapping.columnType.type.toLowerCase().includes('char')) {
                             delete f.mapping.columnType.length;
                             delete f.mapping.columnType.truncate;
+                        }
+                    }
+                    else {
+                        // metafields should never be discarded
+                        if (f.mapping && f.mapping.columnName && f.mapping.columnType) {
+                            f.mapping.isDiscarded = false;
                         }
                     }
 

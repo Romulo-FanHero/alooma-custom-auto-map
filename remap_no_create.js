@@ -75,7 +75,7 @@ const inPattern = (str, patterns) => {
 };
 
 // helper function to fix column names by decamelizing and replacing spaces with underscores
-const fixNaming = n => decamelize(n).replace(/ /g, '_');
+const fixNaming = n => decamelize(n).replace(/ /g, '_').replace(/@/g, '_');
 
 // login (auth cookie is picked up here automatically and propagates to all subsequent calls)
 request.post(`${BASE_URL}/login`, { json: { email: EMAIL, password: PASSWORD } })
@@ -87,7 +87,7 @@ request.post(`${BASE_URL}/login`, { json: { email: EMAIL, password: PASSWORD } }
     .then(evts => promise.map(
 
         // filter unmapped types
-        evts.filter(e => e.state === 'UNMAPPED' && !inPattern(e.name, EVENT_EXCLUSION_PATTERN) && e.name.includes('dataflux')),
+        evts.filter(e => e.state === 'UNMAPPED' && !inPattern(e.name, EVENT_EXCLUSION_PATTERN) && (e.name.includes('dataflux') || e.name.includes('production'))),
 
         // load full data on each type
         evt => request.get(`${BASE_URL}/event-types/${evt.name}`)
@@ -99,9 +99,6 @@ request.post(`${BASE_URL}/login`, { json: { email: EMAIL, password: PASSWORD } }
             .then(evt => {
 
                 console.log(evt.name, 'started');
-
-                // flat list to store the mapping for each field on the evt obj
-                var mappings = [];
 
                 // initial sort key index
                 var sortKeyIndex = 0;
@@ -138,6 +135,13 @@ request.post(`${BASE_URL}/login`, { json: { email: EMAIL, password: PASSWORD } }
                         }
                         if (inPattern(f.mapping.columnName, FORCE_VARCHAR_PATTERNS)) {
                             f.mapping.columnType.type = 'VARCHAR';
+                        }
+
+                        if (
+                            (f.mapping.columnName && f.mapping.columnName.includes('google_analytics')) ||
+                            (f.mapping.fieldName && f.mapping.fieldName.includes('google_analytics'))
+                        ) {
+                            f.mapping.columnType.type = 'BOOLEAN';
                         }
 
                         // enforce default varchar behavior
@@ -259,10 +263,9 @@ request.post(`${BASE_URL}/login`, { json: { email: EMAIL, password: PASSWORD } }
                             (f.mapping.columnName && f.mapping.columnName.includes('length')) ||
                             (f.mapping.fieldName && f.mapping.fieldName.includes('length'))
                         ) {
-                            f.mapping.columnType.type = 'BIGINT';
+                            f.mapping.columnType.type = 'INT';
                         }
                     }
-                    mappings.push(_.omit(_.cloneDeep(f.mapping), ['isDiscarded', 'machineGenerated', 'subFields']));
                 });
                 autoMap(evt);
 
@@ -290,8 +293,7 @@ request.post(`${BASE_URL}/login`, { json: { email: EMAIL, password: PASSWORD } }
                 const tableName = evt.name.split('.')[1];
 
                 // apply custom mapping
-                return request.post(`${BASE_URL}/tables/${schema}/${tableName}`, { json: mappings })
-                    .then(() => request.post(`${BASE_URL}/event-types/${evt.name}/mapping`, { json: {
+                return request.post(`${BASE_URL}/event-types/${evt.name}/mapping`, { json: {
                         name: evt.name,
                         mapping: {
                             tableName: tableName,
@@ -299,7 +301,7 @@ request.post(`${BASE_URL}/login`, { json: { email: EMAIL, password: PASSWORD } }
                         },
                         fields: evt.fields,
                         mappingMode: DEFAULT_MAPPING_MODE
-                    }}))
+                    }})
                     .then(() => console.log(evt.name, 'finished'))
                     .catch(console.error);
             })

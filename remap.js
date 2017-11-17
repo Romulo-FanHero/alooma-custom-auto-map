@@ -187,6 +187,12 @@ request.post(`${BASE_URL}/login`, { json: { email: EMAIL, password: PASSWORD } }
                             delete f.mapping.columnType.truncate;
                         }
                     }
+                    else {
+                        // metafields should never be discarded
+                        if (f.mapping && f.mapping.columnName && f.mapping.columnType) {
+                            f.mapping.isDiscarded = false;
+                        }
+                    }
 
                 });
                 autoMap(evt);

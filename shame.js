@@ -131,8 +131,7 @@ request.post(`${BASE_URL}/login`, { json: { email: EMAIL, password: PASSWORD } }
                         if (f.fields.length > 0) return autoMap(f);
 
                         // process non-meta fields
-                        var meta = f.mapping.columnName.includes('meta') || f.father.includes('meta') || f.fieldName.includes('meta');
-                        if (!meta) {
+                        if (!(f.mapping.columnName.includes('_metadata') || f.father.includes('_metadata') || f.fieldName.includes('_metadata') || (f.father + fixNaming(f.fieldName)).includes('_metadata'))) {
 
                             // specifiy column name
                             f.mapping.columnName = f.father + fixNaming(f.fieldName);
@@ -205,6 +204,12 @@ request.post(`${BASE_URL}/login`, { json: { email: EMAIL, password: PASSWORD } }
                                 f.mapping.isDiscarded = true;
                                 f.mapping.columnName = '';
                                 f.mapping.columnType = null;
+                            }
+                        }
+                        else {
+                            // metafields should never be discarded
+                            if (f.mapping && f.mapping.columnName && f.mapping.columnType) {
+                                f.mapping.isDiscarded = false;
                             }
                         }
 
