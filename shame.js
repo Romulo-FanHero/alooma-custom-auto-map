@@ -63,7 +63,7 @@ const FORCE_BIGINT_PATTERNS = ['geolocation_timestamp', 'properties_transaction'
 const FORCE_FLOAT_PATTERNS = ['geolocation'];
 
 // columns in this pattern are discarded (not mapped)
-const DISCARD_COLUMN_PATTERNS = ['floor_level', 'integrations_', 'context_traits_modified_at'];
+const DISCARD_COLUMN_PATTERNS = ['floor_level', 'integrations_', 'context_traits_modified_at', 'properties_my_comments', 'properties_my_shares'];
 
 // patterns on table names to be bypassed and not processed at all by this script
 const EVENT_EXCLUSION_PATTERN = ['develop', 'other'];
@@ -90,7 +90,7 @@ request.post(`${BASE_URL}/login`, { json: { email: EMAIL, password: PASSWORD } }
     .then(evts => promise.map(
 
         // filter unmapped types
-        evts.filter(e => e.state !== 'UNMAPPED' && e.state !== 'MAPPED' && !inPattern(e.name, EVENT_EXCLUSION_PATTERN) && e.name.includes('dataflux')),
+        evts.filter(e => e.state !== 'UNMAPPED' && e.state !== 'MAPPED' && !inPattern(e.name, EVENT_EXCLUSION_PATTERN) && (e.name.includes('production') || e.name.includes('dataflux'))),
 
         evt => {
 
@@ -158,7 +158,7 @@ request.post(`${BASE_URL}/login`, { json: { email: EMAIL, password: PASSWORD } }
                             }
 
                             // enforce default timestamp behavior
-                            if (f.mapping.columnType.type.toLowerCase().includes('timestamp')) {
+                            if (f.mapping.columnType.type && f.mapping.columnType.type.toLowerCase().includes('timestamp')) {
                                 f.mapping.columnType.type = DEFAULT_TIMESTAMP_TYPE;
                             }
 
@@ -195,13 +195,13 @@ request.post(`${BASE_URL}/login`, { json: { email: EMAIL, password: PASSWORD } }
                             else f.mapping.primaryKey = false;
 
                             // enforce no length/truncate fields on non-CHAR types
-                            if (!f.mapping.columnType.type.toLowerCase().includes('char')) {
+                            if (f.mapping.columnType.type && !f.mapping.columnType.type.toLowerCase().includes('char')) {
                                 delete f.mapping.columnType.length;
                                 delete f.mapping.columnType.truncate;
                             }
 
                             // verify discard conditions and set flag accordingly
-                            if (inPattern(f.mapping.columnName, DISCARD_COLUMN_PATTERNS)) {
+                            if (!f.mapping.columnType.type || inPattern(f.mapping.columnName, DISCARD_COLUMN_PATTERNS)) {
                                 f.mapping.isDiscarded = true;
                                 f.mapping.columnName = '';
                                 f.mapping.columnType = null;
