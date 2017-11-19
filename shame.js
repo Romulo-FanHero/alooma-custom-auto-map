@@ -90,7 +90,7 @@ request.post(`${BASE_URL}/login`, { json: { email: EMAIL, password: PASSWORD } }
     .then(evts => promise.map(
 
         // filter unmapped types
-        evts.filter(e => e.state !== 'UNMAPPED' && e.state !== 'MAPPED' && !inPattern(e.name, EVENT_EXCLUSION_PATTERN) && (e.name.includes('production') || e.name.includes('dataflux') || e.name.includes('salesforce'))),
+        evts.filter(e => e.state !== 'UNMAPPED' && e.state !== 'MAPPED' && !inPattern(e.name, EVENT_EXCLUSION_PATTERN) && (e.name.includes('production') || e.name.includes('dataflux') || e.name.includes('salesforce') || e.name.includes('segment') )),
 
         evt => {
 
@@ -213,6 +213,10 @@ request.post(`${BASE_URL}/login`, { json: { email: EMAIL, password: PASSWORD } }
                             }
                         }
 
+                        if (f.mapping && f.mapping.columnType && f.mapping.columnType.type && !f.mapping.columnType.type.toLowerCase().includes('numeric')) {
+                            delete f.mapping.columnType.scale;
+                            delete f.mapping.columnType.precision;
+                        }
                     });
                     autoMap(evt);
 
