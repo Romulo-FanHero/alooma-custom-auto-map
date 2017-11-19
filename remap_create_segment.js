@@ -87,7 +87,7 @@ request.post(`${BASE_URL}/login`, { json: { email: EMAIL, password: PASSWORD } }
     .then(evts => promise.map(
 
         // filter unmapped types
-        evts.filter(e => e.state === 'UNMAPPED' && !inPattern(e.name, EVENT_EXCLUSION_PATTERN) && e.name.includes('segment')),
+        evts.filter(e => e.state === 'UNMAPPED' && !inPattern(e.name, EVENT_EXCLUSION_PATTERN) && (e.name.includes('segment') || e.name.includes('resync'))),
 
         // load full data on each type
         evt => request.get(`${BASE_URL}/event-types/${evt.name}`)
