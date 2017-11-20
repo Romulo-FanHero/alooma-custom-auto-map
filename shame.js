@@ -90,9 +90,11 @@ request.post(`${BASE_URL}/login`, { json: { email: EMAIL, password: PASSWORD } }
     .then(evts => promise.map(
 
         // filter unmapped types
-        evts.filter(e => e.state !== 'UNMAPPED' && e.state !== 'MAPPED' && !inPattern(e.name, EVENT_EXCLUSION_PATTERN) && (e.name.includes('production') || e.name.includes('dataflux') || e.name.includes('salesforce') || e.name.includes('segment') || e.name.includes('resync'))),
+        evts.filter(e => e.state === 'PARTIALLY_MAPPED' && !inPattern(e.name, EVENT_EXCLUSION_PATTERN) && (e.name.includes('production') || e.name.includes('dataflux') || e.name.includes('salesforce') || e.name.includes('segment') || e.name.includes('resync'))),
 
         evt => {
+
+            console.log(evt.state);
 
             var umap = [];
 
