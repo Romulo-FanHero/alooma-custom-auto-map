@@ -94,8 +94,6 @@ request.post(`${BASE_URL}/login`, { json: { email: EMAIL, password: PASSWORD } }
 
         evt => {
 
-            console.log(evt.state);
-
             var umap = [];
 
             return request.get(`${BASE_URL}/event-types/${evt.name}`)
