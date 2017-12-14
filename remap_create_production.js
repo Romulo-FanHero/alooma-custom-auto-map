@@ -1,15 +1,3 @@
-/************************************************************************
- *
- * HIGHLY CUSTOMIZABLE AUTO-MAPPING EXTENSION FOR ALOOMA ETL PLATFORM
- *
- * @Author: oakromulo (Romulo-FanHero)
- * @Date:   2017-10-27T19:47:19-02:00
- * @Email:  romulo@fanhero.com
- * @Last modified by:   oakromulo
- * @Last modified time: 2017-10-31T16:07:21-02:00
- * @License: MIT
- *
- ************************************************************************/
 
 // dependencies
 const _ = require('lodash');
@@ -33,9 +21,9 @@ const DEFAULT_VARCHAR_TRUNCATION = true;
 const DEFAULT_TIMESTAMP_TYPE = 'TIMESTAMPTZ';
 
 // define settings for the primary key (informative-only on Redshift)
-const DEFAULT_PRIMARY_KEY = 'message_id';
-const DEFAULT_PRIMARY_KEY_TYPE = 'CHAR';
-const DEFAULT_PRIMARY_KEY_LENGTH = 36;
+const DEFAULT_PRIMARY_KEY = '_id';
+const DEFAULT_PRIMARY_KEY_TYPE = 'VARCHAR';
+const DEFAULT_PRIMARY_KEY_LENGTH = 64;
 const DEFAULT_PRIMARY_KEY_TRUNCATION = false;
 
 // define a column for an evenly distribution of fact table data across nodes
@@ -87,7 +75,7 @@ request.post(`${BASE_URL}/login`, { json: { email: EMAIL, password: PASSWORD } }
     .then(evts => promise.map(
 
         // filter unmapped types
-        evts.filter(e => e.state === 'UNMAPPED' && !inPattern(e.name, EVENT_EXCLUSION_PATTERN) && (e.name.includes('leech') || e.name.includes('figures'))),
+        evts.filter(e => e.state === 'UNMAPPED' && !inPattern(e.name, EVENT_EXCLUSION_PATTERN) && e.name.includes('production.')),
 
         // load full data on each type
         evt => request.get(`${BASE_URL}/event-types/${evt.name}`)
@@ -227,20 +215,26 @@ request.post(`${BASE_URL}/login`, { json: { email: EMAIL, password: PASSWORD } }
                             (f.mapping.columnName && f.mapping.columnName.includes('database')) ||
                             (f.mapping.fieldName && f.mapping.fieldName.includes('database')) ||
 
+                            (f.mapping.columnName && f.mapping.columnName.includes('db')) ||
+                            (f.mapping.fieldName && f.mapping.fieldName.includes('db')) ||
+
+                            (f.mapping.columnName && f.mapping.columnName.includes('collection')) ||
+                            (f.mapping.fieldName && f.mapping.fieldName.includes('collection')) ||
+
                             (f.mapping.columnName && f.mapping.columnName.includes('table')) ||
                             (f.mapping.fieldName && f.mapping.fieldName.includes('table')) ||
 
                             (f.mapping.columnName && f.mapping.columnName.includes('schema')) ||
                             (f.mapping.fieldName && f.mapping.fieldName.includes('schema')) ||
 
-                            (f.mapping.columnName && f.mapping.columnName.includes('client')) ||
-                            (f.mapping.fieldName && f.mapping.fieldName.includes('client')) ||
-
                             (f.mapping.columnName && f.mapping.columnName.includes('token')) ||
                             (f.mapping.fieldName && f.mapping.fieldName.includes('token')) ||
 
                             (f.mapping.columnName && f.mapping.columnName.includes('version')) ||
-                            (f.mapping.fieldName && f.mapping.fieldName.includes('version'))
+                            (f.mapping.fieldName && f.mapping.fieldName.includes('version')) ||
+
+                            (f.mapping.columnName && f.mapping.columnName.includes('client')) ||
+                            (f.mapping.fieldName && f.mapping.fieldName.includes('client'))
                         ) {
                             f.mapping.columnType.type = 'VARCHAR';
                             f.mapping.columnType.length = 1024;
@@ -269,7 +263,9 @@ request.post(`${BASE_URL}/login`, { json: { email: EMAIL, password: PASSWORD } }
 
                         if (
                             (f.mapping.columnName && f.mapping.columnName.includes('restream_count')) ||
-                            (f.mapping.fieldName && f.mapping.fieldName.includes('restream_count'))
+                            (f.mapping.fieldName && f.mapping.fieldName.includes('restream_count')) ||
+                            (f.mapping.columnName && f.mapping.columnName.includes('ordinal')) ||
+                            (f.mapping.fieldName && f.mapping.fieldName.includes('ordinal'))
                         ) {
                             f.mapping.columnType.type = 'BIGINT';
                         }

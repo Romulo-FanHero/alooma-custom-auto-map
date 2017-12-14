@@ -26,7 +26,7 @@ const BASE_URL = 'https://app.alooma.com:443/rest';
 const DEFAULT_MAPPING_MODE = 'STRICT';
 
 // default settings to be applied to all fields identified by auto-map as VARCHAR
-const DEFAULT_VARCHAR_LENGTH = 4096;
+const DEFAULT_VARCHAR_LENGTH = 512;
 const DEFAULT_VARCHAR_TRUNCATION = true;
 
 // choose between TIMESTAMP and TIMESTAMPTZ as default type for timestamp columns
@@ -87,7 +87,7 @@ request.post(`${BASE_URL}/login`, { json: { email: EMAIL, password: PASSWORD } }
     .then(evts => promise.map(
 
         // filter unmapped types
-        evts.filter(e => e.state === 'UNMAPPED' && !inPattern(e.name, EVENT_EXCLUSION_PATTERN) && (e.name.includes('leech') || e.name.includes('figures'))),
+        evts.filter(e => e.state === 'UNMAPPED' && !inPattern(e.name, EVENT_EXCLUSION_PATTERN) && (e.name.includes('dataflux') || false)),
 
         // load full data on each type
         evt => request.get(`${BASE_URL}/event-types/${evt.name}`)

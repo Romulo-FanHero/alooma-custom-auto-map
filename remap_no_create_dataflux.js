@@ -26,7 +26,7 @@ const BASE_URL = 'https://app.alooma.com:443/rest';
 const DEFAULT_MAPPING_MODE = 'STRICT';
 
 // default settings to be applied to all fields identified by auto-map as VARCHAR
-const DEFAULT_VARCHAR_LENGTH = 4096;
+const DEFAULT_VARCHAR_LENGTH = 512;
 const DEFAULT_VARCHAR_TRUNCATION = true;
 
 // choose between TIMESTAMP and TIMESTAMPTZ as default type for timestamp columns
@@ -63,7 +63,7 @@ const FORCE_BIGINT_PATTERNS = ['geolocation_timestamp', 'properties_transaction'
 const FORCE_FLOAT_PATTERNS = ['geolocation'];
 
 // patterns on table names to be bypassed and not processed at all by this script
-const EVENT_EXCLUSION_PATTERN = ['develop', 'other'];
+const EVENT_EXCLUSION_PATTERN = ['develop', 'other', 'screen', 'timing', 'heartbeat', 'scrollend'];
 
 // naïve helper method to check if `str` include any of the specified `patterns`
 const inPattern = (str, patterns) => {
@@ -87,7 +87,7 @@ request.post(`${BASE_URL}/login`, { json: { email: EMAIL, password: PASSWORD } }
     .then(evts => promise.map(
 
         // filter unmapped types
-        evts.filter(e => e.state === 'UNMAPPED' && !inPattern(e.name, EVENT_EXCLUSION_PATTERN) && (e.name.includes('leech') || e.name.includes('figures'))),
+        evts.filter(e => e.state === 'PARTIALLY_MAPPED' && !inPattern(e.name, EVENT_EXCLUSION_PATTERN) && (e.name.includes('dataflux') || false)),
 
         // load full data on each type
         evt => request.get(`${BASE_URL}/event-types/${evt.name}`)
@@ -128,6 +128,7 @@ request.post(`${BASE_URL}/login`, { json: { email: EMAIL, password: PASSWORD } }
 
                         // verify discard conditions and set flag accordingly
                         f.mapping.isDiscarded = false;
+                        if (!f.mapping.columnType) f.mapping.columnType = { type: 'VARCHAR' };
 
                         // check if column type matches a data type change pattern
                         if (inPattern(f.mapping.columnName, FORCE_FLOAT_PATTERNS)) {
@@ -303,8 +304,7 @@ request.post(`${BASE_URL}/login`, { json: { email: EMAIL, password: PASSWORD } }
                 const tableName = evt.name.split('.')[1];
 
                 // apply custom mapping
-                return request.post(`${BASE_URL}/tables/${schema}/${tableName}`, { json: mappings })
-                    .then(() => request.post(`${BASE_URL}/event-types/${evt.name}/mapping`, { json: {
+                return request.post(`${BASE_URL}/event-types/${evt.name}/mapping`, { json: {
                         name: evt.name,
                         mapping: {
                             tableName: tableName,
@@ -312,7 +312,7 @@ request.post(`${BASE_URL}/login`, { json: { email: EMAIL, password: PASSWORD } }
                         },
                         fields: evt.fields,
                         mappingMode: DEFAULT_MAPPING_MODE
-                    }}))
+                    }})
                     .then(() => console.log(evt.name, 'finished'))
                     .catch(console.error);
             })
